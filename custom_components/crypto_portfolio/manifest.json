@@ -8,7 +8,6 @@
     "requirements": ["requests", "flask"],
     "config_flow": true,
     "integration_type": "hub",
-    "iot_class": "local_polling",
-    "domain": ["sensor"]
+    "iot_class": "local_polling"
   }
   

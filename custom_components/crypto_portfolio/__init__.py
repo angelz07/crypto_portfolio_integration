@@ -3,10 +3,12 @@ from flask import Flask, jsonify, request
 import threading
 from homeassistant.config_entries import ConfigEntry
 from homeassistant.core import HomeAssistant
+from homeassistant.helpers import aiohttp_client
+from homeassistant.helpers.typing import ConfigType, HomeAssistantType
 from .db import create_table, add_transaction, get_transactions, delete_transaction, update_transaction, get_crypto_transactions
 from .crypto_portfolio import get_crypto_id, get_crypto_price, get_historical_price, calculate_profit_loss
+from .const import DOMAIN
 
-DOMAIN = "crypto_portfolio"
 _LOGGER = logging.getLogger(__name__)
 
 app = Flask(__name__)
@@ -67,11 +69,11 @@ def update_transaction_endpoint(transaction_id):
 def run_flask_app():
     app.run(host='0.0.0.0', port=5000)
 
-def setup(hass: HomeAssistant, config: dict):
+async def async_setup(hass: HomeAssistant, config: ConfigType) -> bool:
     create_table()
     thread = threading.Thread(target=run_flask_app)
     thread.start()
     return True
 
-def setup_entry(hass: HomeAssistant, entry: ConfigEntry):
-    return setup(hass, entry.data)
+async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
+    return await async_setup(hass, entry.data)

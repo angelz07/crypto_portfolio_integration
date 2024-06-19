@@ -3,8 +3,7 @@ from flask import Flask, jsonify, request
 import threading
 from homeassistant.config_entries import ConfigEntry
 from homeassistant.core import HomeAssistant
-from homeassistant.helpers import aiohttp_client
-from homeassistant.helpers.typing import ConfigType, HomeAssistantType
+from homeassistant.helpers.typing import ConfigType
 from .db import create_table, add_transaction, get_transactions, delete_transaction, update_transaction, get_crypto_transactions
 from .crypto_portfolio import get_crypto_id, get_crypto_price, get_historical_price, calculate_profit_loss
 from .const import DOMAIN
@@ -76,4 +75,7 @@ async def async_setup(hass: HomeAssistant, config: ConfigType) -> bool:
     return True
 
 async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
+    hass.async_create_task(
+        hass.config_entries.async_forward_entry_setup(entry, "sensor")
+    )
     return await async_setup(hass, entry.data)

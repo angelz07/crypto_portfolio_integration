@@ -3,6 +3,8 @@ from flask import Flask, jsonify, request
 import threading
 from homeassistant.config_entries import ConfigEntry
 from homeassistant.core import HomeAssistant
+from .db import create_table, add_transaction, get_transactions, delete_transaction, update_transaction, get_crypto_transactions
+from .crypto_portfolio import get_crypto_id, get_crypto_price, get_historical_price, calculate_profit_loss
 
 DOMAIN = "crypto_portfolio"
 _LOGGER = logging.getLogger(__name__)
@@ -66,6 +68,7 @@ def run_flask_app():
     app.run(host='0.0.0.0', port=5000)
 
 def setup(hass: HomeAssistant, config: dict):
+    create_table()
     thread = threading.Thread(target=run_flask_app)
     thread.start()
     return True

@@ -37,6 +37,18 @@ def get_historical_price(crypto_id, date):
     except KeyError:
         return None
 
+def add_test_transactions():
+    test_transactions = [
+        ('Polygon', 'matic-network', 244.862, 130.346, 'buy', 'Bitget', '2023-09-18', 0.5323243296223996),
+        ('Polygon', 'matic-network', 227.913, 127.461, 'buy', 'Bitget', '2023-10-01', 0.5592528728067289),
+        ('Ethereum', 'ethereum', 0.0188939, 30.77, 'buy', 'Kucoin', '2023-10-21', 1628.567950502543),
+        ('Ethereum', 'ethereum', 0.01, 18.17, 'sell', 'Kucoin', '2023-10-25', 1817),
+        ('Ethereum', 'ethereum', 0.0199527, 41.47, 'buy', 'Bitget', '2023-11-25', 2078.41545254527)
+    ]
+    for tx in test_transactions:
+        add_transaction(*tx)
+        logging.info(f"Added test transaction: {tx}")
+
 def calculate_profit_loss():
     transactions = get_transactions()
     crypto_groups = {}
@@ -141,14 +153,6 @@ def update_transaction_endpoint(transaction_id):
 
 def run_flask_app():
     app.run(host='0.0.0.0', port=5000)
-
-def setup(hass, config):
-    thread = threading.Thread(target=run_flask_app)
-    thread.start()
-    return True
-
-def setup_entry(hass, entry):
-    return setup(hass, entry.data)
 
 if __name__ == '__main__':
     if ENABLE_TEST_TRANSACTIONS:

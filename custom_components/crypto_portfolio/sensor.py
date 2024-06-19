@@ -6,12 +6,13 @@ _LOGGER = logging.getLogger(__name__)
 
 async def async_setup_entry(hass, config_entry, async_add_entities):
     """Setup sensor platform."""
-    async_add_entities([CryptoTransactionsSensor(), CryptoProfitLossSensor()])
+    async_add_entities([CryptoTransactionsSensor(hass), CryptoProfitLossSensor(hass)])
 
 class CryptoTransactionsSensor(Entity):
-    def __init__(self):
+    def __init__(self, hass):
         self._state = None
         self._attributes = {}
+        self.hass = hass
 
     @property
     def name(self):
@@ -28,7 +29,9 @@ class CryptoTransactionsSensor(Entity):
     async def async_update(self):
         _LOGGER.debug("Updating Crypto Transactions Sensor")
         try:
-            response = requests.get('http://localhost:5000/transactions')
+            response = await self.hass.async_add_executor_job(
+                requests.get, 'http://localhost:5000/transactions'
+            )
             if response.status_code == 200:
                 transactions = response.json()
                 self._state = len(transactions)
@@ -40,9 +43,10 @@ class CryptoTransactionsSensor(Entity):
             _LOGGER.error(f"Exception in CryptoTransactionsSensor: {e}")
 
 class CryptoProfitLossSensor(Entity):
-    def __init__(self):
+    def __init__(self, hass):
         self._state = None
         self._attributes = {}
+        self.hass = hass
 
     @property
     def name(self):
@@ -59,7 +63,9 @@ class CryptoProfitLossSensor(Entity):
     async def async_update(self):
         _LOGGER.debug("Updating Crypto Profit Loss Sensor")
         try:
-            response = requests.get('http://localhost:5000/profit_loss')
+            response = await self.hass.async_add_executor_job(
+                requests.get, 'http://localhost:5000/profit_loss'
+            )
             if response.status_code == 200:
                 result = response.json()
                 self._state = result['summary']['total_profit_loss']

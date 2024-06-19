@@ -3,7 +3,6 @@ from homeassistant.helpers.entity import Entity
 
 async def async_setup_entry(hass, config_entry, async_add_entities):
     """Setup sensor platform."""
-    # You can add more sensors if needed
     async_add_entities([CryptoTransactionsSensor(), CryptoProfitLossSensor()])
 
 class CryptoTransactionsSensor(Entity):

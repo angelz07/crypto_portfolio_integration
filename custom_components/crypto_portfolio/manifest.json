@@ -5,6 +5,7 @@
     "documentation": "https://github.com/angelz07/crypto_portfolio",
     "dependencies": [],
     "codeowners": ["@angelz07"],
-    "requirements": ["requests", "flask"]
+    "requirements": ["requests", "flask"],
+    "config_flow": true
   }
   

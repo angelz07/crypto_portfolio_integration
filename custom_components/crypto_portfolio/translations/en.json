@@ -1,0 +1,24 @@
+{
+    "config": {
+      "step": {
+        "user": {
+          "title": "Configure Crypto Portfolio",
+          "description": "Setup your crypto portfolio integration",
+          "data": {
+            "name": "Name"
+          }
+        }
+      }
+    },
+    "options": {
+      "step": {
+        "init": {
+          "title": "Crypto Portfolio Options",
+          "data": {
+            "option1": "Option 1"
+          }
+        }
+      }
+    }
+  }
+  

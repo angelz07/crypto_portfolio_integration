@@ -1,0 +1,10 @@
+{
+    "domain": "crypto_portfolio",
+    "name": "Crypto Portfolio",
+    "version": "1.0",
+    "documentation": "https://github.com/angelz07/crypto_portfolio",
+    "dependencies": [],
+    "codeowners": ["@angelz07"],
+    "requirements": ["requests", "flask"]
+  }
+  

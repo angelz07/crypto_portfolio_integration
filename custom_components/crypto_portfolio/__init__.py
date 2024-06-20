@@ -1,3 +1,5 @@
+import os
+import json
 import logging
 from datetime import datetime
 from flask import Flask, jsonify, request
@@ -12,6 +14,19 @@ from .const import DOMAIN
 _LOGGER = logging.getLogger(__name__)
 
 app = Flask(__name__)
+
+def load_translations(language: str, domain: str) -> dict:
+    """Load translations for the specified language."""
+    translations_path = os.path.join(
+        os.path.dirname(__file__), "translations", f"{language}.json"
+    )
+    try:
+        with open(translations_path, "r", encoding="utf-8") as file:
+            return json.load(file)
+    except FileNotFoundError:
+        _LOGGER.error(f"Translation file for {language} not found.")
+        return {}
+
 
 @app.route('/transactions', methods=['GET'])
 def transactions():
@@ -102,7 +117,7 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
     
     # Load translations
     selected_language = entry.data.get("language", "fr")
-    translations = await async_get_translations(hass, selected_language, 'translations')
+    translations = load_translations(selected_language, DOMAIN)
     title = translations.get("wallet", "Wallet")
     
     hass.data[DOMAIN][entry.entry_id] = {

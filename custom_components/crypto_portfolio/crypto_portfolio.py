@@ -152,9 +152,9 @@ def update_transaction_endpoint(transaction_id):
     return jsonify({"message": "Transaction updated"}), 200
 
 def run_flask_app():
+    if ENABLE_TEST_TRANSACTIONS:
+        add_test_transactions()
     app.run(host='0.0.0.0', port=5000)
 
 if __name__ == '__main__':
-    if ENABLE_TEST_TRANSACTIONS:
-        add_test_transactions()
     run_flask_app()

@@ -41,12 +41,12 @@ class CryptoTransactionsSensor(Entity):
                 requests.get, 'http://localhost:5000/transactions'
             )
             if response.status_code == 200:
-                transactions = response.json()
-                self._state = len(transactions)
-                self._attributes['transactions'] = transactions
-                _LOGGER.debug(f"Transactions: {transactions}")
+                data = response.json()
+                self._state = len(data)
+                self._attributes = {"transactions": data}
+                _LOGGER.debug(f"Crypto Transactions Sensor updated: {data}")
             else:
-                _LOGGER.error(f"Error fetching transactions: {response.status_code}")
+                _LOGGER.error(f"Error fetching data: {response.status_code}")
         except Exception as e:
             _LOGGER.error(f"Exception in CryptoTransactionsSensor: {e}")
 
@@ -80,12 +80,11 @@ class CryptoProfitLossSensor(Entity):
                 requests.get, 'http://localhost:5000/profit_loss'
             )
             if response.status_code == 200:
-                result = response.json()
-                self._state = result['summary']['total_profit_loss']
-                self._attributes['details'] = result['details']
-                _LOGGER.debug(f"Profit/Loss Summary: {result['summary']}")
-                _LOGGER.debug(f"Profit/Loss Details: {result['details']}")
+                data = response.json()
+                self._state = data['summary']['total_profit_loss']
+                self._attributes = data
+                _LOGGER.debug(f"Crypto Profit Loss Sensor updated: {data}")
             else:
-                _LOGGER.error(f"Error fetching profit/loss: {response.status_code}")
+                _LOGGER.error(f"Error fetching data: {response.status_code}")
         except Exception as e:
             _LOGGER.error(f"Exception in CryptoProfitLossSensor: {e}")

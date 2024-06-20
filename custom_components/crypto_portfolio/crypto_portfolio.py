@@ -26,7 +26,11 @@ def get_crypto_price(crypto_id):
     url = f"https://api.coingecko.com/api/v3/simple/price?ids={crypto_id}&vs_currencies=usd"
     response = requests.get(url)
     data = response.json()
-    return data[crypto_id]['usd']
+    if crypto_id in data:
+        return data[crypto_id]['usd']
+    else:
+        logging.error(f"Price data for {crypto_id} not found.")
+        return 0
 
 def get_historical_price(crypto_id, date):
     url = f"https://api.coingecko.com/api/v3/coins/{crypto_id}/history?date={date}"

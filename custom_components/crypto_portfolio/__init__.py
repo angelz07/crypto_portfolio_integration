@@ -15,18 +15,21 @@ _LOGGER = logging.getLogger(__name__)
 
 app = Flask(__name__)
 
-def load_translations(language: str, domain: str) -> dict:
+async def load_translations(hass: HomeAssistant, language: str, domain: str) -> dict:
     """Load translations for the specified language."""
     translations_path = os.path.join(
         os.path.dirname(__file__), "translations", f"{language}.json"
     )
     try:
-        with open(translations_path, "r", encoding="utf-8") as file:
-            return json.load(file)
+        translations = await hass.async_add_executor_job(read_json_file, translations_path)
+        return translations
     except FileNotFoundError:
         _LOGGER.error(f"Translation file for {language} not found.")
         return {}
 
+def read_json_file(filepath):
+    with open(filepath, "r", encoding="utf-8") as file:
+        return json.load(file)
 
 @app.route('/transactions', methods=['GET'])
 def transactions():
@@ -117,7 +120,7 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
     
     # Load translations
     selected_language = entry.data.get("language", "fr")
-    translations = load_translations(selected_language, DOMAIN)
+    translations = await load_translations(hass, selected_language, DOMAIN)
     title = translations.get("wallet", "Wallet")
     
     hass.data[DOMAIN][entry.entry_id] = {

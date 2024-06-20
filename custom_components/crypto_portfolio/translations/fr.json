@@ -1,0 +1,43 @@
+{
+    "title": "Portefeuille Crypto",
+    "config": {
+        "step": {
+            "user": {
+                "title": "Configurer votre intégration de portefeuille crypto",
+                "data": {
+                    "name": "Nom"
+                }
+            }
+        }
+    },
+    "options": {
+        "step": {
+            "init": {
+                "title": "Options du Portefeuille Crypto",
+                "data": {
+                    "option1": "Option 1"
+                }
+            }
+        }
+    },
+    "entity": {
+        "sensor": {
+            "crypto_portfolio": {
+                "name": "Portefeuille Crypto",
+                "state": {
+                    "total_investment": "Investissement Total",
+                    "total_profit_loss": "Profit/Perte Total",
+                    "total_profit_loss_percent": "Profit/Perte Total en Pourcentage",
+                    "total_value": "Valeur Totale",
+                    "investment": "Investissement",
+                    "current_value": "Valeur Actuelle",
+                    "profit_loss": "Profit/Perte",
+                    "profit_loss_percent": "Profit/Perte en Pourcentage",
+                    "crypto_name": "Nom de la Crypto",
+                    "crypto_id": "ID de la Crypto"
+                }
+            }
+        }
+    },
+    "wallet": "Portefeuille"
+}

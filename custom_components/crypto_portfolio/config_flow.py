@@ -3,6 +3,9 @@ from homeassistant.core import callback
 import voluptuous as vol
 from .const import DOMAIN
 
+# List of supported languages
+SUPPORTED_LANGUAGES = ["en", "fr"]
+
 class CryptoPortfolioConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
     """Handle a config flow for Crypto Portfolio."""
 
@@ -17,6 +20,7 @@ class CryptoPortfolioConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
             step_id="user",
             data_schema=vol.Schema({
                 vol.Required("name"): str,
+                vol.Required("language", default="fr"): vol.In(SUPPORTED_LANGUAGES),
             })
         )
 

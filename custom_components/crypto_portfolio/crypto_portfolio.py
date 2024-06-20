@@ -12,7 +12,7 @@ logging.basicConfig(level=logging.INFO)
 ENABLE_TEST_TRANSACTIONS = True
 
 app = Flask(__name__)
-
+ 
 def get_crypto_id(name):
     url = f"https://api.coingecko.com/api/v3/search?query={name}"
     response = requests.get(url)

@@ -6,13 +6,17 @@ _LOGGER = logging.getLogger(__name__)
 
 async def async_setup_entry(hass, config_entry, async_add_entities):
     """Setup sensor platform."""
-    async_add_entities([CryptoTransactionsSensor(hass), CryptoProfitLossSensor(hass)])
+    async_add_entities([
+        CryptoTransactionsSensor(hass, config_entry.entry_id),
+        CryptoProfitLossSensor(hass, config_entry.entry_id)
+    ])
 
 class CryptoTransactionsSensor(Entity):
-    def __init__(self, hass):
+    def __init__(self, hass, entry_id):
         self._state = None
         self._attributes = {}
         self.hass = hass
+        self._entry_id = entry_id
 
     @property
     def name(self):
@@ -21,6 +25,10 @@ class CryptoTransactionsSensor(Entity):
     @property
     def state(self):
         return self._state
+
+    @property
+    def unique_id(self):
+        return f"{self._entry_id}_crypto_transactions"
 
     @property
     def extra_state_attributes(self):
@@ -43,10 +51,11 @@ class CryptoTransactionsSensor(Entity):
             _LOGGER.error(f"Exception in CryptoTransactionsSensor: {e}")
 
 class CryptoProfitLossSensor(Entity):
-    def __init__(self, hass):
+    def __init__(self, hass, entry_id):
         self._state = None
         self._attributes = {}
         self.hass = hass
+        self._entry_id = entry_id
 
     @property
     def name(self):
@@ -55,6 +64,10 @@ class CryptoProfitLossSensor(Entity):
     @property
     def state(self):
         return self._state
+
+    @property
+    def unique_id(self):
+        return f"{self._entry_id}_crypto_profit_loss"
 
     @property
     def extra_state_attributes(self):

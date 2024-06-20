@@ -30,7 +30,7 @@ This repository hosts multiple integrations for Home Assistant, allowing you to 
 ### Crypto Portfolio
 Track and manage your cryptocurrency portfolio within Home Assistant. View your total investment, current value, and profit/loss for each cryptocurrency you hold.
 
-[More details](https://github.com/angelz07/crypto_portfolio_integration/blob/main/README.md)
+[More details](https://github.com/angelz07/crypto_portfolio_integration/blob/main/custom_components/crypto_portfolio/Readme.md)
 
 ## Configuration
 1. **Set Up the Integration**

@@ -8,5 +8,7 @@
     "requirements": ["requests", "flask", "datetime"],
     "config_flow": true,
     "integration_type": "hub",
-    "iot_class": "local_polling"
+    "iot_class": "local_polling",
+    "image": "custom_components/crypto_portfolio/img/logo.png",
+    "icon": "custom_components/crypto_portfolio/img/logo.png"
 }

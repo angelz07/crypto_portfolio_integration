@@ -28,30 +28,34 @@ async def async_setup_entry(hass, config_entry, async_add_entities):
 
 async def update_individual_crypto_sensors(hass, config_entry, async_add_entities):
     """Fetch individual crypto sensors and add or update them."""
-    response = await hass.async_add_executor_job(
-        requests.get, 'http://localhost:5000/profit_loss'
-    )
-    if response.status_code == 200:
-        data = response.json()
-        new_sensors = []
-        existing_sensors = hass.data['crypto_sensors']
+    try:
+        response = await hass.async_add_executor_job(
+            requests.get, 'http://localhost:5000/profit_loss'
+        )
+        if response.status_code == 200:
+            data = response.json()
+            new_sensors = []
+            existing_sensors = hass.data['crypto_sensors']
 
-        for detail in data['details']:
-            sensor_id = f"{config_entry.entry_id}_{detail['crypto_id']}_investment"
-            if sensor_id not in existing_sensors:
-                new_sensors.append(CryptoInvestmentSensor(hass, config_entry.entry_id, detail))
-                new_sensors.append(CryptoCurrentValueSensor(hass, config_entry.entry_id, detail))
-                new_sensors.append(CryptoProfitLossDetailSensor(hass, config_entry.entry_id, detail))
-                new_sensors.append(CryptoProfitLossPercentDetailSensor(hass, config_entry.entry_id, detail))
-            else:
-                existing_sensors[sensor_id].update_data(detail)
+            for detail in data['details']:
+                sensor_id = f"{config_entry.entry_id}_{detail['crypto_id']}_investment"
+                if sensor_id not in existing_sensors:
+                    new_sensors.append(CryptoInvestmentSensor(hass, config_entry.entry_id, detail))
+                    new_sensors.append(CryptoCurrentValueSensor(hass, config_entry.entry_id, detail))
+                    new_sensors.append(CryptoProfitLossDetailSensor(hass, config_entry.entry_id, detail))
+                    new_sensors.append(CryptoProfitLossPercentDetailSensor(hass, config_entry.entry_id, detail))
+                else:
+                    existing_sensors[sensor_id].update_data(detail)
 
-        if new_sensors:
-            async_add_entities(new_sensors)
-            for sensor in new_sensors:
-                hass.data['crypto_sensors'][sensor.unique_id] = sensor
+            if new_sensors:
+                async_add_entities(new_sensors)
+                for sensor in new_sensors:
+                    hass.data['crypto_sensors'][sensor.unique_id] = sensor
 
-        await remove_unused_sensors(hass, config_entry, data['details'])
+            await remove_unused_sensors(hass, config_entry, data['details'])
+
+    except requests.exceptions.ConnectionError as e:
+        _LOGGER.error(f"Error connecting to Flask server: {e}")
 
 async def remove_unused_sensors(hass, config_entry, current_details):
     """Remove sensors for cryptos with no transactions."""

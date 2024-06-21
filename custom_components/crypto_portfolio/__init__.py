@@ -7,7 +7,6 @@ import threading
 from homeassistant.config_entries import ConfigEntry
 from homeassistant.core import HomeAssistant
 from homeassistant.helpers.typing import ConfigType
-from homeassistant.helpers.translation import async_get_translations
 from .db import create_table, add_transaction, get_transactions, delete_transaction, update_transaction, get_crypto_transactions
 from .crypto_portfolio import get_crypto_id, get_crypto_price, get_historical_price, calculate_profit_loss
 from .const import DOMAIN
@@ -15,22 +14,6 @@ from .const import DOMAIN
 _LOGGER = logging.getLogger(__name__)
 
 app = Flask(__name__)
-
-async def load_translations(hass: HomeAssistant, language: str, domain: str) -> dict:
-    """Load translations for the specified language."""
-    translations_path = os.path.join(
-        os.path.dirname(__file__), "translations", f"{language}.json"
-    )
-    try:
-        translations = await hass.async_add_executor_job(read_json_file, translations_path)
-        return translations
-    except FileNotFoundError:
-        _LOGGER.error(f"Translation file for {language} not found.")
-        return {}
-
-def read_json_file(filepath):
-    with open(filepath, "r", encoding="utf-8") as file:
-        return json.load(file)
 
 @app.route('/transactions', methods=['GET'])
 def transactions():
@@ -118,15 +101,8 @@ async def async_setup(hass: HomeAssistant, config: ConfigType) -> bool:
 
 async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
     hass.data.setdefault(DOMAIN, {})
-    
-    # Load translations
-    selected_language = entry.data.get("language", "en")
-    translations = await load_translations(hass, selected_language, DOMAIN)
-    title = translations.get("wallet", "Wallet")
-    
-    hass.data[DOMAIN][entry.entry_id] = {
-        "title": title
-    }
+
+    hass.data[DOMAIN][entry.entry_id] = {}
 
     hass.async_create_task(
         hass.config_entries.async_forward_entry_setup(entry, "sensor")

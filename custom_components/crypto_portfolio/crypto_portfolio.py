@@ -1,45 +1,35 @@
 import json
 import requests
-from datetime import datetime
+import requests_cache
+from datetime import datetime, timedelta
 import logging
-import time
 from flask import Flask, jsonify, request
 from .db import add_transaction, get_transactions, delete_transaction, update_transaction, get_crypto_transactions
 
 # Configure logging
 logging.basicConfig(level=logging.INFO)
 
-# Flag to enable/disable test transactions
-ENABLE_TEST_TRANSACTIONS = True
+# Configure caching
+expire_after = timedelta(minutes=10)
+requests_cache.install_cache('coingecko_cache', expire_after=expire_after)
 
-# Cache configuration
-CACHE_DURATION = 300  # Durée de mise en cache en secondes (5 minutes)
-cache = {}
-
+# Flask app setup
 app = Flask(__name__)
 
-def get_data(url):
-    current_time = time.time()
-    if url in cache and current_time - cache[url]['time'] < CACHE_DURATION:
-        return cache[url]['data']
-
-    response = requests.get(url)
-    if response.status_code == 200:
-        data = response.json()
-        cache[url] = {'data': data, 'time': current_time}
-        return data
-    else:
-        response.raise_for_status()
-
-def get_data_with_retry(url, retries=5, backoff_factor=1):
-    for attempt in range(retries):
+def get_data_with_retry(url, retries=5, backoff_factor=1.0):
+    for i in range(retries):
         try:
-            return get_data(url)
+            response = requests.get(url)
+            response.raise_for_status()
+            return response.json()
         except requests.exceptions.RequestException as e:
-            if attempt < retries - 1:
-                time.sleep(backoff_factor * (2 ** attempt))
+            if response.status_code == 429:  # Too Many Requests
+                wait_time = backoff_factor * (2 ** i)
+                logging.warning(f"Rate limit exceeded. Waiting for {wait_time} seconds.")
+                time.sleep(wait_time)
             else:
                 raise e
+    raise requests.exceptions.RequestException(f"Failed to get data from {url} after {retries} retries")
 
 def get_crypto_id(name):
     url = f"https://api.coingecko.com/api/v3/search?query={name}"
@@ -84,7 +74,7 @@ def calculate_profit_loss():
     crypto_groups = {}
     for transaction in transactions:
         crypto_id = transaction[2]
-        if (crypto_id not in crypto_groups):
+        if crypto_id not in crypto_groups:
             crypto_groups[crypto_id] = []
         crypto_groups[crypto_id].append(transaction)
 
@@ -207,6 +197,5 @@ def run_flask_app():
     app.run(host='0.0.0.0', port=5000)
 
 if __name__ == '__main__':
-    if ENABLE_TEST_TRANSACTIONS:
-        add_test_transactions()
     run_flask_app()
+

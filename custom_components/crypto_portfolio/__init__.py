@@ -92,7 +92,7 @@ def update_transaction_endpoint(transaction_id):
 
 def run_flask_app():
     _LOGGER.info("Starting Flask app with gunicorn")
-    os.system("gunicorn -w 4 -b 0.0.0.0:5000 wsgi:app")
+    os.system("/config/custom_components/crypto_portfolio/start_flask.sh")
 
 async def async_setup(hass: HomeAssistant, config: ConfigType) -> bool:
     create_table()

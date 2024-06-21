@@ -351,4 +351,3 @@ class CryptoProfitLossPercentDetailSensor(Entity):
     def update_data(self, detail):
         self._state = detail['profit_loss_percent']
         self._attributes = detail
-

@@ -3,6 +3,7 @@ import requests
 import requests_cache
 from datetime import datetime, timedelta
 import logging
+import time
 from flask import Flask, jsonify, request
 from .db import add_transaction, get_transactions, delete_transaction, update_transaction, get_crypto_transactions
 
@@ -150,6 +151,10 @@ def add_transaction_endpoint():
             historical_price = price_usd / quantity
 
         add_transaction(crypto_name, crypto_id, quantity, price_usd, transaction_type, location, date, historical_price)
+
+        # Detect and add new sensors if necessary
+        update_transactions()  # Ensure new sensors are created for new cryptos
+
         logging.info(f"Added transaction: {crypto_name}, {crypto_id}, {quantity}, {price_usd}, {transaction_type}, {location}, {date}, {historical_price}")
         return jsonify({"message": "Transaction added"}), 201
     except Exception as e:
@@ -193,9 +198,87 @@ def update_transaction_endpoint(transaction_id):
         logging.error(f"Error updating transaction: {e}")
         return jsonify({"error": "Internal Server Error"}), 500
 
+def update_transactions():
+    transactions = get_transactions()
+    known_cryptos = get_known_cryptos()  # Function to get currently known cryptos
+
+    new_cryptos = set()
+    for transaction in transactions:
+        crypto_id = transaction[2]
+        if crypto_id not in known_cryptos:
+            new_cryptos.add(crypto_id)
+            known_cryptos.add(crypto_id)
+
+    if new_cryptos:
+        for crypto_id in new_cryptos:
+            add_new_crypto_sensor(crypto_id)  # Function to add new sensor
+
+    # Recalculate profit/loss
+    result = calculate_profit_loss()
+    # Here you would send updated profit/loss data to the sensors
+    # This can be done through Home Assistant API or other means
+
+    # Update Home Assistant sensors if required
+    update_sensors(result)
+
+def update_sensors(profit_loss_data):
+    for detail in profit_loss_data['details']:
+        crypto_id = detail['crypto_id']
+        update_sensor_state(f"sensor.crypto_{crypto_id}_investment", detail['investment'])
+        update_sensor_state(f"sensor.crypto_{crypto_id}_current_value", detail['current_value'])
+        update_sensor_state(f"sensor.crypto_{crypto_id}_profit_loss", detail['profit_loss'])
+        update_sensor_state(f"sensor.crypto_{crypto_id}_profit_loss_percent", detail['profit_loss_percent'])
+
+    update_sensor_state("sensor.total_investment", profit_loss_data['summary']['total_investment'])
+    update_sensor_state("sensor.total_value", profit_loss_data['summary']['total_value'])
+    update_sensor_state("sensor.total_profit_loss", profit_loss_data['summary']['total_profit_loss'])
+    update_sensor_state("sensor.total_profit_loss_percent", profit_loss_data['summary']['total_profit_loss_percent'])
+
+def update_sensor_state(sensor_id, state):
+    url = f"http://localhost:8123/api/states/{sensor_id}"
+    data = {
+        "state": state,
+        "attributes": {
+            "unit_of_measurement": "USD" if "percent" not in sensor_id else "%",
+            "friendly_name": sensor_id.replace("sensor.", "").replace("_", " ").title()
+        }
+    }
+    headers = {
+        "Authorization": "Bearer YOUR_LONG_LIVED_ACCESS_TOKEN",
+        "content-type": "application/json",
+    }
+    response = requests.post(url, json=data, headers=headers)
+    if response.status_code == 200:
+        logging.info(f"Updated sensor {sensor_id} with state {state}")
+    else:
+        logging.error(f"Failed to update sensor {sensor_id}. Status code: {response.status_code}, Response: {response.text}")
+
+
+def get_known_cryptos():
+    transactions = get_transactions()
+    return {transaction[2] for transaction in transactions}
+
+def add_new_crypto_sensor(crypto_id):
+    url = f"http://localhost:8123/api/states/sensor.crypto_{crypto_id}"
+    data = {
+        "state": "unknown",
+        "attributes": {
+            "unit_of_measurement": "USD",
+            "friendly_name": f"Crypto {crypto_id}"
+        }
+    }
+    headers = {
+        "Authorization": "Bearer YOUR_LONG_LIVED_ACCESS_TOKEN",
+        "content-type": "application/json",
+    }
+    response = requests.post(url, json=data, headers=headers)
+    if response.status_code == 201:
+        logging.info(f"Added new sensor for {crypto_id}")
+    else:
+        logging.error(f"Failed to add new sensor for {crypto_id}. Status code: {response.status_code}, Response: {response.text}")
+
 def run_flask_app():
     app.run(host='0.0.0.0', port=5000)
 
 if __name__ == '__main__':
     run_flask_app()
-

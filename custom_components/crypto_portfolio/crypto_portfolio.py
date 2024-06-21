@@ -6,6 +6,7 @@ import logging
 import time
 from flask import Flask, jsonify, request
 from .db import add_transaction, get_transactions, delete_transaction, update_transaction, get_crypto_transactions
+import os
 
 # Configure logging
 logging.basicConfig(level=logging.INFO)
@@ -215,10 +216,8 @@ def update_transactions():
 
     # Recalculate profit/loss
     result = calculate_profit_loss()
-    # Here you would send updated profit/loss data to the sensors
-    # This can be done through Home Assistant API or other means
 
-    # Update Home Assistant sensors if required
+    # Update Home Assistant sensors with the recalculated data
     update_sensors(result)
 
 def update_sensors(profit_loss_data):
@@ -235,7 +234,7 @@ def update_sensors(profit_loss_data):
     update_sensor_state("sensor.total_profit_loss_percent", profit_loss_data['summary']['total_profit_loss_percent'])
 
 def update_sensor_state(sensor_id, state):
-    url = f"http://localhost:8123/api/states/{sensor_id}"
+    url = f"http://supervisor/core/api/states/{sensor_id}"
     data = {
         "state": state,
         "attributes": {
@@ -244,7 +243,7 @@ def update_sensor_state(sensor_id, state):
         }
     }
     headers = {
-        "Authorization": "Bearer YOUR_LONG_LIVED_ACCESS_TOKEN",
+        "Authorization": f"Bearer {os.environ['SUPERVISOR_TOKEN']}",
         "content-type": "application/json",
     }
     response = requests.post(url, json=data, headers=headers)
@@ -253,13 +252,12 @@ def update_sensor_state(sensor_id, state):
     else:
         logging.error(f"Failed to update sensor {sensor_id}. Status code: {response.status_code}, Response: {response.text}")
 
-
 def get_known_cryptos():
     transactions = get_transactions()
     return {transaction[2] for transaction in transactions}
 
 def add_new_crypto_sensor(crypto_id):
-    url = f"http://localhost:8123/api/states/sensor.crypto_{crypto_id}"
+    url = f"http://supervisor/core/api/states/sensor.crypto_{crypto_id}"
     data = {
         "state": "unknown",
         "attributes": {
@@ -268,7 +266,7 @@ def add_new_crypto_sensor(crypto_id):
         }
     }
     headers = {
-        "Authorization": "Bearer YOUR_LONG_LIVED_ACCESS_TOKEN",
+        "Authorization": f"Bearer {os.environ['SUPERVISOR_TOKEN']}",
         "content-type": "application/json",
     }
     response = requests.post(url, json=data, headers=headers)

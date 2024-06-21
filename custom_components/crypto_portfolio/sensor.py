@@ -1,6 +1,6 @@
 import logging
 import requests
-from homeassistant.helpers.entity import Entity, async_remove_platforms
+from homeassistant.helpers.entity import Entity
 from homeassistant.helpers.event import async_track_time_interval
 from datetime import timedelta
 
@@ -17,6 +17,9 @@ async def async_setup_entry(hass, config_entry, async_add_entities):
         TotalProfitLossPercentSensor(hass, config_entry.entry_id)
     ])
 
+    # Initialize the list of crypto sensors
+    hass.data.setdefault('crypto_sensors', {})
+
     # Fetch and add individual crypto sensors
     await update_individual_crypto_sensors(hass, config_entry, async_add_entities)
 
@@ -31,7 +34,7 @@ async def update_individual_crypto_sensors(hass, config_entry, async_add_entitie
     if response.status_code == 200:
         data = response.json()
         new_sensors = []
-        existing_sensors = {sensor.unique_id: sensor for sensor in hass.data.get('crypto_sensors', [])}
+        existing_sensors = hass.data['crypto_sensors']
 
         for detail in data['details']:
             sensor_id = f"{config_entry.entry_id}_{detail['crypto_id']}_investment"
@@ -45,7 +48,8 @@ async def update_individual_crypto_sensors(hass, config_entry, async_add_entitie
 
         if new_sensors:
             async_add_entities(new_sensors)
-            hass.data.setdefault('crypto_sensors', []).extend(new_sensors)
+            for sensor in new_sensors:
+                hass.data['crypto_sensors'][sensor.unique_id] = sensor
 
         await remove_unused_sensors(hass, config_entry, data['details'])
 
@@ -54,15 +58,14 @@ async def remove_unused_sensors(hass, config_entry, current_details):
     current_crypto_ids = {detail['crypto_id'] for detail in current_details}
     sensors_to_remove = []
 
-    for sensor in hass.data.get('crypto_sensors', []):
-        if isinstance(sensor, (CryptoInvestmentSensor, CryptoCurrentValueSensor, CryptoProfitLossDetailSensor, CryptoProfitLossPercentDetailSensor)):
-            if sensor.crypto_id not in current_crypto_ids:
-                sensors_to_remove.append(sensor)
+    for sensor_id, sensor in hass.data.get('crypto_sensors', {}).items():
+        if sensor.crypto_id not in current_crypto_ids:
+            sensors_to_remove.append(sensor)
 
     if sensors_to_remove:
         for sensor in sensors_to_remove:
-            hass.data['crypto_sensors'].remove(sensor)
-        await async_remove_platforms(hass, config_entry, 'sensor', sensors_to_remove)
+            await sensor.async_remove()
+            hass.data['crypto_sensors'].pop(sensor.unique_id)
 
 class CryptoTransactionsSensor(Entity):
     def __init__(self, hass, entry_id):

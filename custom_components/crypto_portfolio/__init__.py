@@ -91,12 +91,14 @@ def update_transaction_endpoint(transaction_id):
         return jsonify({"error": "Internal Server Error"}), 500
 
 def run_flask_app():
+    _LOGGER.info("Starting Flask app with gunicorn")
     os.system("gunicorn --bind 0.0.0.0:5000 wsgi:app")
 
 async def async_setup(hass: HomeAssistant, config: ConfigType) -> bool:
     create_table()
     thread = threading.Thread(target=run_flask_app)
     thread.start()
+    _LOGGER.info("Started Flask app thread")
     return True
 
 async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:

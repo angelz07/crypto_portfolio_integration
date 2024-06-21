@@ -2,6 +2,7 @@ import json
 import requests
 from datetime import datetime
 import logging
+import time
 from flask import Flask, jsonify, request
 from .db import add_transaction, get_transactions, delete_transaction, update_transaction, get_crypto_transactions
 
@@ -11,12 +12,38 @@ logging.basicConfig(level=logging.INFO)
 # Flag to enable/disable test transactions
 ENABLE_TEST_TRANSACTIONS = True
 
+# Cache configuration
+CACHE_DURATION = 300  # Durée de mise en cache en secondes (5 minutes)
+cache = {}
+
 app = Flask(__name__)
+
+def get_data(url):
+    current_time = time.time()
+    if url in cache and current_time - cache[url]['time'] < CACHE_DURATION:
+        return cache[url]['data']
+
+    response = requests.get(url)
+    if response.status_code == 200:
+        data = response.json()
+        cache[url] = {'data': data, 'time': current_time}
+        return data
+    else:
+        response.raise_for_status()
+
+def get_data_with_retry(url, retries=5, backoff_factor=1):
+    for attempt in range(retries):
+        try:
+            return get_data(url)
+        except requests.exceptions.RequestException as e:
+            if attempt < retries - 1:
+                time.sleep(backoff_factor * (2 ** attempt))
+            else:
+                raise e
 
 def get_crypto_id(name):
     url = f"https://api.coingecko.com/api/v3/search?query={name}"
-    response = requests.get(url)
-    data = response.json()
+    data = get_data_with_retry(url)
     for coin in data['coins']:
         if coin['name'].lower() == name.lower():
             return coin['id']
@@ -24,8 +51,7 @@ def get_crypto_id(name):
 
 def get_crypto_price(crypto_id):
     url = f"https://api.coingecko.com/api/v3/simple/price?ids={crypto_id}&vs_currencies=usd"
-    response = requests.get(url)
-    data = response.json()
+    data = get_data_with_retry(url)
     if crypto_id in data:
         return data[crypto_id]['usd']
     else:
@@ -34,8 +60,7 @@ def get_crypto_price(crypto_id):
 
 def get_historical_price(crypto_id, date):
     url = f"https://api.coingecko.com/api/v3/coins/{crypto_id}/history?date={date}"
-    response = requests.get(url)
-    data = response.json()
+    data = get_data_with_retry(url)
     try:
         return data['market_data']['current_price']['usd']
     except KeyError:
@@ -59,7 +84,7 @@ def calculate_profit_loss():
     crypto_groups = {}
     for transaction in transactions:
         crypto_id = transaction[2]
-        if crypto_id not in crypto_groups:
+        if (crypto_id not in crypto_groups):
             crypto_groups[crypto_id] = []
         crypto_groups[crypto_id].append(transaction)
 

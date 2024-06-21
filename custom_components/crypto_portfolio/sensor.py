@@ -59,7 +59,7 @@ async def remove_unused_sensors(hass, config_entry, current_details):
     sensors_to_remove = []
 
     for sensor_id, sensor in hass.data.get('crypto_sensors', {}).items():
-        if sensor.crypto_id not in current_crypto_ids:
+        if sensor._crypto_id not in current_crypto_ids:
             sensors_to_remove.append(sensor)
 
     if sensors_to_remove:

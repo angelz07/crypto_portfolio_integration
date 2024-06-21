@@ -67,9 +67,7 @@ class CryptoTransactionsSensor(Entity):
         except Exception as e:
             _LOGGER.error(f"Exception in CryptoTransactionsSensor: {e}")
 
-
-
-# Define additional sensor classes
+# Définir les classes de capteurs supplémentaires
 class TotalInvestmentSensor(Entity):
     def __init__(self, hass, entry_id):
         self._state = None
@@ -202,7 +200,7 @@ class TotalProfitLossPercentSensor(Entity):
         except Exception as e:
             _LOGGER.error(f"Exception in TotalProfitLossPercentSensor: {e}")
 
-# Individual Crypto Sensors
+# Capteurs individuels pour les cryptos
 class CryptoInvestmentSensor(Entity):
     def __init__(self, hass, entry_id, detail):
         self._state = detail['investment']

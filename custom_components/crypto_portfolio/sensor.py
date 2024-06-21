@@ -227,7 +227,7 @@ class TotalProfitLossPercentSensor(Entity):
             response = await self.hass.async_add_executor_job(
                 requests.get, 'http://localhost:5000/profit_loss'
             )
-            if response.status_code == 200):
+            if response.status_code == 200:
                 data = response.json()
                 self._state = data['summary']['total_profit_loss_percent']
                 _LOGGER.debug(f"Total Profit Loss Percent Sensor updated: {self._state}")
@@ -265,3 +265,86 @@ class CryptoInvestmentSensor(Entity):
         self._state = detail['investment']
         self._attributes = detail
 
+class CryptoCurrentValueSensor(Entity):
+    def __init__(self, hass, entry_id, detail):
+        self._state = detail['current_value']
+        self._attributes = detail
+        self.hass = hass
+        self._entry_id = entry_id
+        self._crypto_id = detail['crypto_id']
+
+    @property
+    def name(self):
+        return f"Current Value {self._crypto_id}"
+
+    @property
+    def state(self):
+        return self._state
+
+    @property
+    def unique_id(self):
+        return f"{self._entry_id}_{self._crypto_id}_current_value"
+
+    @property
+    def extra_state_attributes(self):
+        return self._attributes
+
+    def update_data(self, detail):
+        self._state = detail['current_value']
+        self._attributes = detail
+
+class CryptoProfitLossDetailSensor(Entity):
+    def __init__(self, hass, entry_id, detail):
+        self._state = detail['profit_loss']
+        self._attributes = detail
+        self.hass = hass
+        self._entry_id = entry_id
+        self._crypto_id = detail['crypto_id']
+
+    @property
+    def name(self):
+        return f"Profit Loss {self._crypto_id}"
+
+    @property
+    def state(self):
+        return self._state
+
+    @property
+    def unique_id(self):
+        return f"{self._entry_id}_{self._crypto_id}_profit_loss"
+
+    @property
+    def extra_state_attributes(self):
+        return self._attributes
+
+    def update_data(self, detail):
+        self._state = detail['profit_loss']
+        self._attributes = detail
+
+class CryptoProfitLossPercentDetailSensor(Entity):
+    def __init__(self, hass, entry_id, detail):
+        self._state = detail['profit_loss_percent']
+        self._attributes = detail
+        self.hass = hass
+        self._entry_id = entry_id
+        self._crypto_id = detail['crypto_id']
+
+    @property
+    def name(self):
+        return f"Profit Loss Percent {self._crypto_id}"
+
+    @property
+    def state(self):
+        return self._state
+
+    @property
+    def unique_id(self):
+        return f"{self._entry_id}_{self._crypto_id}_profit_loss_percent"
+
+    @property
+    def extra_state_attributes(self):
+        return self._attributes
+
+    def update_data(self, detail):
+        self._state = detail['profit_loss_percent']
+        self._attributes = detail
